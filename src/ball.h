@@ -23,7 +23,6 @@ struct BallParameters {
   ~BallParameters() {}
 
   // Global simulation parameters
-
   bool enable_structural_constraints;
 
   double damping;
@@ -34,10 +33,8 @@ struct BallParameters {
 };
 
 struct Ball {
-  Ball() {}
-  Ball(double edge_length = 2);
-  ~Ball();
-
+    Ball();
+    //~Ball();
   void buildShape(); // includes building the shape and the mesh.
 
   void simulate(double frames_per_sec, double simulation_steps, BallParameters *cp,
@@ -46,9 +43,7 @@ struct Ball {
                 float windSpeed, const Vector3D& windDirection);
 
   void reset();
-  void buildMesh();
-
-  void build_spatial_map();
+  void buildBallMesh();
 
   // Ball properties
   double side_length;
@@ -56,7 +51,12 @@ struct Ball {
   // Cloth components
   vector<PointMass> point_masses;
   vector<Spring> springs;
-  ClothMesh *clothMesh;
+  ClothMesh *ballMesh;
+
+  // Soccer ball components
+  vector<vector<double>> vertices;
+  vector<vector<int>> edges;
+  vector<vector<int>> faces;
 
   // Wind
   double clock;

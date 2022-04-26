@@ -21,6 +21,8 @@
 #include "json.hpp"
 #include "misc/file_utils.h"
 
+#include "ball.h"
+
 typedef uint32_t gid_t;
 
 using namespace std;
@@ -34,8 +36,9 @@ const string SPHERE = "sphere";
 const string PLANE = "plane";
 const string CLOTH = "cloth";
 const string CUBE = "cube";
+const string BALL = "ball";
 
-const unordered_set<string> VALID_KEYS = {SPHERE, PLANE, CLOTH, CUBE};
+const unordered_set<string> VALID_KEYS = {SPHERE, PLANE, CLOTH, CUBE, BALL};
 
 ClothSimulator *app = nullptr;
 GLFWwindow *window = nullptr;
@@ -158,7 +161,7 @@ void incompleteObjectError(const char *object, const char *attribute) {
   exit(-1);
 }
 
-bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vector<CollisionObject *>* objects, int sphere_num_lat, int sphere_num_lon) {
+bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Ball *ball, BallParameters *bp, vector<CollisionObject *>* objects, int sphere_num_lat, int sphere_num_lon) {
   // Read JSON from file
   ifstream i(filename);
   if (!i.good()) {
@@ -301,34 +304,107 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, vec
       cp->density = density;
       cp->damping = damping;
       cp->ks = ks;
+    } else if (key == BALL) {
+        // Ball
+        vector<vector<double>> vertices;
+        auto it_vertices = object.find("vertices");
+        if (it_vertices != object.end()) {
+            vector<json> points = *it_vertices;
+            for (auto pt : points) {
+                vector<double> vertex = pt;
+                vertices.push_back(vertex);
+            }
+        }
+
+        vector<vector<int>> edges;
+        auto it_edges = object.find("edges");
+        if (it_edges != object.end()) {
+            vector<json> labels = *it_edges;
+            for (auto label : labels) {
+                vector<int> edge = label;
+                edges.push_back(edge);
+            }
+        }
+
+        vector<vector<int>> faces;
+        auto it_faces = object.find("faces");
+        if (it_faces != object.end()) {
+            vector<json> labels = *it_edges;
+            for (auto label : labels) {
+                vector<int> face = label;
+                faces.push_back(face);
+            }
+        }
+
+
+        ball->vertices = vertices;
+        ball->edges = edges;
+        ball->faces = faces;
+
+        // Ball parameters
+        bool enable_structural_constraints;
+        double damping, density, ks;
+
+        auto it_enable_structural = object.find("enable_structural");
+        if (it_enable_structural != object.end()) {
+            enable_structural_constraints = *it_enable_structural;
+        } else {
+            incompleteObjectError("cloth", "enable_structural");
+        }
+
+        auto it_damping = object.find("damping");
+        if (it_damping != object.end()) {
+            damping = *it_damping;
+        } else {
+            incompleteObjectError("cloth", "damping");
+        }
+
+        auto it_density = object.find("density");
+        if (it_density != object.end()) {
+            density = *it_density;
+        } else {
+            incompleteObjectError("cloth", "density");
+        }
+
+        auto it_ks = object.find("ks");
+        if (it_ks != object.end()) {
+            ks = *it_ks;
+        } else {
+            incompleteObjectError("cloth", "ks");
+        }
+
+        bp->enable_structural_constraints = enable_structural_constraints;
+        bp->density = density;
+        bp->damping = damping;
+        bp->ks = ks;
     } else if (key == SPHERE) {
-      Vector3D origin;
-      double radius, friction;
+            Vector3D origin;
+            double radius, friction;
 
-      auto it_origin = object.find("origin");
-      if (it_origin != object.end()) {
-        vector<double> vec_origin = *it_origin;
-        origin = Vector3D(vec_origin[0], vec_origin[1], vec_origin[2]);
-      } else {
-        incompleteObjectError("sphere", "origin");
-      }
+            auto it_origin = object.find("origin");
+            if (it_origin != object.end()) {
+                vector<double> vec_origin = *it_origin;
+                origin = Vector3D(vec_origin[0], vec_origin[1], vec_origin[2]);
+            } else {
+                incompleteObjectError("sphere", "origin");
+            }
 
-      auto it_radius = object.find("radius");
-      if (it_radius != object.end()) {
-        radius = *it_radius;
-      } else {
-        incompleteObjectError("sphere", "radius");
-      }
+            auto it_radius = object.find("radius");
+            if (it_radius != object.end()) {
+                radius = *it_radius;
+            } else {
+                incompleteObjectError("sphere", "radius");
+            }
 
-      auto it_friction = object.find("friction");
-      if (it_friction != object.end()) {
-        friction = *it_friction;
-      } else {
-        incompleteObjectError("sphere", "friction");
-      }
+            auto it_friction = object.find("friction");
+            if (it_friction != object.end()) {
+                friction = *it_friction;
+            } else {
+                incompleteObjectError("sphere", "friction");
+            }
 
-      Sphere *s = new Sphere(origin, radius, friction, sphere_num_lat, sphere_num_lon);
-      objects->push_back(s);
+            Sphere *s = new Sphere(origin, radius, friction, sphere_num_lat, sphere_num_lon);
+            objects->push_back(s);
     } else if (key == PLANE) { // PLANE
       Vector3D point, normal;
       double friction;
@@ -427,7 +503,9 @@ int main(int argc, char **argv) {
   bool found_project_root = find_project_root(search_paths, project_root);
   
   Cloth cloth;
+  Ball ball;
   ClothParameters cp;
+  BallParameters bp;
   vector<CollisionObject *> objects;
   
   int c;
@@ -490,7 +568,7 @@ int main(int argc, char **argv) {
     file_to_load_from = def_fname.str();
   }
   
-  bool success = loadObjectsFromFile(file_to_load_from, &cloth, &cp, &objects, sphere_num_lat, sphere_num_lon);
+  bool success = loadObjectsFromFile(file_to_load_from, &cloth, &cp, &ball, &bp, &objects, sphere_num_lat, sphere_num_lon);
   if (!success) {
     std::cout << "Warn: Unable to load from file: " << file_to_load_from << std::endl;
   }
@@ -503,10 +581,15 @@ int main(int argc, char **argv) {
   cloth.buildGrid();
   cloth.buildClothMesh();
 
+  ball.buildShape();
+  //ball.buildBallMesh();
+
   // Initialize the ClothSimulator object
   app = new ClothSimulator(project_root, screen);
   app->loadCloth(&cloth);
   app->loadClothParameters(&cp);
+  app->loadBall(&ball);
+  app->loadBallParameters(&bp);
   app->loadCollisionObjects(&objects);
   app->init();
 

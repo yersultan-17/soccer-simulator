@@ -190,8 +190,10 @@ ClothSimulator::~ClothSimulator() {
 }
 
 void ClothSimulator::loadCloth(Cloth *cloth) { this->cloth = cloth; }
+void ClothSimulator::loadBall(Ball *ball) { this->ball = ball; }
 
 void ClothSimulator::loadClothParameters(ClothParameters *cp) { this->cp = cp; }
+void ClothSimulator::loadBallParameters(BallParameters *bp) { this->bp = bp; }
 
 void ClothSimulator::loadCollisionObjects(vector<CollisionObject *> *objects) { this->collision_objects = objects; }
 
@@ -217,14 +219,14 @@ void ClothSimulator::init() {
 
   Vector3D avg_pm_position(0, 0, 0);
 
-  for (auto &pm : cloth->point_masses) {
-    avg_pm_position += pm.position / cloth->point_masses.size();
+  for (auto &pm : ball->point_masses) {
+    avg_pm_position += pm.position / ball->point_masses.size();
   }
 
   CGL::Vector3D target(avg_pm_position.x, avg_pm_position.y / 2,
                        avg_pm_position.z);
   CGL::Vector3D c_dir(0., 0., 0.);
-  canonical_view_distance = max(cloth->width, cloth->height) * 0.9;
+  canonical_view_distance = max(50, 50) * 0.9;
   scroll_rate = canonical_view_distance / 10;
 
   view_distance = canonical_view_distance * 2;
@@ -254,7 +256,8 @@ void ClothSimulator::drawContents() {
     vector<Vector3D> external_accelerations = {gravity};
 
     for (int i = 0; i < simulation_steps; i++) {
-      cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
+      //cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
+      ball->simulate(frames_per_sec, simulation_steps, bp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
     }
   }
 
@@ -281,7 +284,8 @@ void ClothSimulator::drawContents() {
   switch (active_shader.type_hint) {
   case WIREFRAME:
     shader.setUniform("u_color", color, false);
-    drawWireframe(shader);
+    //drawWireframe(shader);
+    drawBallWireframe(shader);
     break;
   case NORMALS:
     drawNormals(shader);
@@ -326,6 +330,44 @@ void ClothSimulator::drawContents() {
   for (CollisionObject *co : *collision_objects) {
     co->render(shader);
   }
+}
+
+void ClothSimulator::drawBallWireframe(GLShader &shader) {
+    int num_springs = 90;
+    MatrixXf positions(4, num_springs * 2);
+    //MatrixXf normals(4, num_springs * 2);
+    // Draw springs as lines
+
+    int si = 0;
+
+    for (int i = 0; i < ball->springs.size(); i++) {
+        Spring s = ball->springs[i];
+
+        if (s.spring_type == STRUCTURAL && !bp->enable_structural_constraints) {
+            continue;
+        }
+
+        Vector3D pa = s.pm_a->position;
+        Vector3D pb = s.pm_b->position;
+
+        //Vector3D na = s.pm_a->normal();
+        //Vector3D nb = s.pm_b->normal();
+
+        positions.col(si) << pa.x, pa.y, pa.z, 1.0;
+        positions.col(si + 1) << pb.x, pb.y, pb.z, 1.0;
+
+        //normals.col(si) << na.x, na.y, na.z, 0.0;
+        //normals.col(si + 1) << nb.x, nb.y, nb.z, 0.0;
+
+        si += 2;
+    }
+
+    //shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
+    shader.uploadAttrib("in_position", positions, false);
+    // Commented out: the wireframe shader does not have this attribute
+    //shader.uploadAttrib("in_normal", normals);
+
+    shader.drawArray(GL_LINES, 0, num_springs * 2);
 }
 
 void ClothSimulator::drawWireframe(GLShader &shader) {

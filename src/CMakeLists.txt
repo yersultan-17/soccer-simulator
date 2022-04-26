@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 # Soccer simulator source
 set(SOCCERSIM_VIEWER_SOURCE
+    # Ball simulation objects
+    ball.cpp
+
     # Cloth simulation objects
     cloth.cpp
     clothMesh.cpp
