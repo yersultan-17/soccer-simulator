@@ -41,5 +41,3 @@ CMakeSettings.json
 build
 xcode
 
-# Windows
-cmake-build-debug
