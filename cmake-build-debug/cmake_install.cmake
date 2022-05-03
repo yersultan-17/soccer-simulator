@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yersultan/ucb/sp22/graph/soccer-simulator
+# Install script for directory: /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,9 +39,9 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/ext/nanogui/cmake_install.cmake")
-  include("/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/CGL/cmake_install.cmake")
-  include("/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/src/cmake_install.cmake")
+  include("/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/ext/nanogui/cmake_install.cmake")
+  include("/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/CGL/cmake_install.cmake")
+  include("/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/src/cmake_install.cmake")
 
 endif()
 
@@ -53,5 +53,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -1,8 +1,8 @@
-# Install script for directory: /Users/yersultan/ucb/sp22/graph/soccer-simulator/CGL
+# Install script for directory: /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/CGL
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/Users/yersultan/ucb/sp22/graph/soccer-simulator/CGL")
+  set(CMAKE_INSTALL_PREFIX "/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/CGL")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/CGL/src/cmake_install.cmake")
+  include("/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/CGL/src/cmake_install.cmake")
 
 endif()
 

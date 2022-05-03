@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yersultan/ucb/sp22/graph/soccer-simulator/ext/nanogui/ext/glfw/src
+# Install script for directory: /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/ext/nanogui/ext/glfw/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

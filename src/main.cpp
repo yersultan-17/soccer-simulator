@@ -304,7 +304,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
       cp->density = density;
       cp->damping = damping;
       cp->ks = ks;
-    } else if (key == BALL) {
+    }
+    else if (key == BALL) {
         // Ball
         vector<vector<double>> vertices;
         auto it_vertices = object.find("vertices");
@@ -335,7 +336,6 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
                 faces.push_back(face);
             }
         }
-
 
         ball->vertices = vertices;
         ball->edges = edges;
@@ -377,7 +377,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
         bp->density = density;
         bp->damping = damping;
         bp->ks = ks;
-    } else if (key == SPHERE) {
+    }
+    else if (key == SPHERE) {
             Vector3D origin;
             double radius, friction;
 
@@ -405,7 +406,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
 
             Sphere *s = new Sphere(origin, radius, friction, sphere_num_lat, sphere_num_lon);
             objects->push_back(s);
-    } else if (key == PLANE) { // PLANE
+    }
+    else if (key == PLANE) { // PLANE
       Vector3D point, normal;
       double friction;
 
@@ -434,7 +436,8 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
 
       Plane *p = new Plane(point, normal, friction);
       objects->push_back(p);
-    } else { // BOX
+    }
+    else { // BOX
       Vector3D center;
       double side, friction;
 
@@ -466,7 +469,6 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
   }
 
   i.close();
-  
   return true;
 }
 

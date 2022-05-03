@@ -1,4 +1,4 @@
-# Install script for directory: /Users/yersultan/ucb/sp22/graph/soccer-simulator/ext/nanogui
+# Install script for directory: /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/ext/nanogui
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug/ext/nanogui/ext_build/glfw/cmake_install.cmake")
+  include("/Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug/ext/nanogui/ext_build/glfw/cmake_install.cmake")
 
 endif()
 

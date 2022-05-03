@@ -1,4 +1,4 @@
-/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Applications/CLion.app/Contents/bin/ninja/mac/ninja -G Ninja /Users/yersultan/ucb/sp22/graph/soccer-simulator
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator
 CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
   Compatibility with CMake < 2.8.12 will be removed from a future version of
   CMake.
@@ -7,8 +7,8 @@ CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
   CMake that the project does not need compatibility with older versions.
 
 
--- The C compiler identification is AppleClang 13.0.0.13000027
--- The CXX compiler identification is AppleClang 13.0.0.13000027
+-- The C compiler identification is AppleClang 10.0.1.10010046
+-- The CXX compiler identification is AppleClang 10.0.1.10010046
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
 -- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
@@ -38,7 +38,7 @@ CMake Deprecation Warning at ext/nanogui/ext/glfw/CMakeLists.txt:5 (cmake_minimu
 -- Performing Test HAS_CPP11_FLAG
 -- Performing Test HAS_CPP11_FLAG - Success
 -- NanoGUI: using libc++ and libc++abi.
--- Found OpenGL: /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk/System/Library/Frameworks/OpenGL.framework   
+-- Found OpenGL: /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework   
 -- Found Freetype: /usr/local/lib/libfreetype.dylib (found version "2.11.1") 
 CMake Deprecation Warning at CGL/CMakeLists.txt:1 (cmake_minimum_required):
   Compatibility with CMake < 2.8.12 will be removed from a future version of
@@ -66,4 +66,4 @@ CMake Deprecation Warning at src/CMakeLists.txt:1 (cmake_minimum_required):
 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /Users/yersultan/ucb/sp22/graph/soccer-simulator/cmake-build-debug
+-- Build files have been written to: /Users/sagarasanghavi/Desktop/Graphics/soccer-simulator/cmake-build-debug

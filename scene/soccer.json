@@ -1,6 +1,6 @@
 {
   "ball": {
-    "damping": 0.2,
+    "damping": 0.01,
     "density": 200.0,
     "ks": 10000.0,
     "enable_structural": true,

@@ -11,6 +11,8 @@
 using namespace std;
 
 const double PHI = (1 + sqrt(5)) / 2;
+const double INTERNAL_PRESSURE = 10000.0;
+int frame_num = 0;
 
 Ball::Ball() {
     buildShape();
@@ -38,7 +40,7 @@ void Ball::buildShape() {
   }
 }
 
-bool isSpringEnabled(Spring *s, BallParameters *cp) {
+bool isSpringEnabled(Spring *s, BallParameters *bp) {
   return true;
 }
 
@@ -83,7 +85,7 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
     for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
         PointMass *pm = it.operator->();
         Vector3D dir = pm->position - centroid;
-        pm->forces += (10000.5 * dir.unit()) / dir.norm();
+        pm->forces += (INTERNAL_PRESSURE * dir.unit()) / dir.norm();
 
     }
 
@@ -106,25 +108,38 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
 
 
     // TODO (Part 2): Use Verlet integration to compute new point mass positions
+
+    int i = 0;
     for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
+
         PointMass *pm = it.operator->();
+
+        // hack: initial "hit" force in first iteration
+        if (frame_num == 0) {
+            pm->forces += Vector3D(100000, 0, 0);
+        }
+
+        // hack: wind
+        if (frame_num < 5 && (i == 0 || i == 3 || i == 8 || i == 5 || i == 1)){
+            pm->forces += Vector3D(100000, 0, 100000);
+        }
+
         if (pm->pinned) continue;
-        double d = bp->damping / 100.0;
+        double d = bp->damping / 1000.0;
         Vector3D updated =
                 pm->position + (1.0 - d) * (pm->position - pm->last_position) + (pm->forces / mass) * delta_t * delta_t;
         pm->last_position = pm->position;
         pm->position = updated;
+        i += 1;
     }
+    frame_num += 1;
 
-
-    // TODO (Part 4): Handle self-collisions.
+    // Handle self-collisions.
 //  build_spatial_map();
 //  for (auto & pm : point_masses) {
 //    self_collide(pm, simulation_steps);
 //  }
 
-
-    // TODO (Part 3): Handle collisions with other primitives.
   for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
     PointMass *pm = it.operator->();
     for (auto obj: *collision_objects) {
@@ -132,8 +147,6 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
     }
   }
 
-
-    // TODO (Part 2): Constrain the changes to be such that the spring does not change
     // in length more than 10% per timestep [Provot 1995].
     for (auto it = springs.begin(); it != springs.end(); ++it) {
         Spring *s = it.operator->();
