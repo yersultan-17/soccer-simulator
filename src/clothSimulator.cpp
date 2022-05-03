@@ -19,7 +19,7 @@
 #include <ctime>
 #include <sys/time.h>
 
-#define WINDENABLED false
+#define WINDENABLED true
 
 using namespace nanogui;
 using namespace std;
@@ -31,8 +31,7 @@ Vector3D load_texture(int frame_idx, GLuint handle, const char* where) {
   
   glActiveTexture(GL_TEXTURE0 + frame_idx);
   glBindTexture(GL_TEXTURE_2D, handle);
-  
-  
+
   int img_x, img_y, img_n;
   unsigned char* img_data = stbi_load(where, &img_x, &img_y, &img_n, 3);
   size_retval.x = img_x;
@@ -49,23 +48,27 @@ Vector3D load_texture(int frame_idx, GLuint handle, const char* where) {
   return size_retval;
 }
 
+
+// Used some code from https://github.com/VictorGordan/opengl-tutorials/blob/main/YoutubeOpenGL%2019%20-%20Cubemaps%20%26%20Skyboxes/Main.cpp
 void load_cubemap(int frame_idx, GLuint handle, const std::vector<std::string>& file_locs) {
-  glActiveTexture(GL_TEXTURE0 + frame_idx);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
-  for (int side_idx = 0; side_idx < 6; ++side_idx) {
-    
-    int img_x, img_y, img_n;
-    unsigned char* img_data = stbi_load(file_locs[side_idx].c_str(), &img_x, &img_y, &img_n, 3);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side_idx, 0, GL_RGB, img_x, img_y, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data);
-    stbi_image_free(img_data);
-    std::cout << "Side " << side_idx << " has dimensions " << img_x << ", " << img_y << std::endl;
+
+    glActiveTexture(GL_TEXTURE0 + frame_idx);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
+
+
+    for (int side_idx = 0; side_idx < 6; ++side_idx) {
+        int img_x, img_y, img_n;
+        unsigned char* img_data = stbi_load(file_locs[side_idx].c_str(), &img_x, &img_y, &img_n, 3);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + side_idx, 0, GL_RGB, img_x, img_y, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data);
+        stbi_image_free(img_data);
+        std::cout << "Side " << side_idx << " has dimensions " << img_x << ", " << img_y << std::endl;
+    }
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-  }
 }
 
 void ClothSimulator::load_textures() {
@@ -171,6 +174,7 @@ ClothSimulator::ClothSimulator(std::string project_root, Screen *screen)
 
   glEnable(GL_PROGRAM_POINT_SIZE);
   glEnable(GL_DEPTH_TEST);
+
 }
 
 ClothSimulator::~ClothSimulator() {
@@ -261,10 +265,25 @@ void ClothSimulator::drawContents() {
     }
   }
 
+  // Before other shaders, bind the skybox shader
+  GLShader skybox_shader = GLShader();
+  skybox_shader.initFromFiles("Skybox", "Skybox.vert", "Skybox.frag");
+  skybox_shader.bind();
+
+  Matrix4f view = getViewMatrix();
+  Matrix4f projection = getProjectionMatrix();
+  Matrix4f viewProjection = projection * view;
+  skybox_shader.bind();
+
+  skybox_shader.setUniform("u_view_projection", viewProjection, false);
+
+  skybox_shader.setUniform("u_texture_cubemap", m_gl_cubemap_tex, false);
+  skybox_shader.drawArray(GL_TRIANGLES, 0, 36);
+
+
+
   // Bind the active shader
-
-  const UserShader& active_shader = shaders[active_shader_idx];
-
+  UserShader& active_shader = shaders[active_shader_idx];
   GLShader &shader = *active_shader.nanogui_shader;
   shader.bind();
 
@@ -272,11 +291,6 @@ void ClothSimulator::drawContents() {
 
   Matrix4f model;
   model.setIdentity();
-
-  Matrix4f view = getViewMatrix();
-  Matrix4f projection = getProjectionMatrix();
-
-  Matrix4f viewProjection = projection * view;
 
   shader.setUniform("u_model", model);
   shader.setUniform("u_view_projection", viewProjection);

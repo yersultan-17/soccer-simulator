@@ -3,6 +3,7 @@
 #include <random>
 #include <vector>
 #include <numeric>
+#include <algorithm>
 
 #include "ball.h"
 #include "collision/plane.h"
@@ -47,13 +48,15 @@ bool isSpringEnabled(Spring *s, BallParameters *bp) {
 void Ball::simulate(double frames_per_sec, double simulation_steps, BallParameters *bp,
                      vector<Vector3D> external_accelerations,
                      vector<CollisionObject *> *collision_objects,
-                     float windSpeed, const Vector3D& windDirection) {
+                     float windSpeed, Vector3D& windDirection) {
+    windSpeed = 100.0;
+    windDirection = Vector3D(1, 0, 0);
     double mass = bp->density / 60.f;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
     // Wind EC: keeping track of global clock of wind that resets periodically
-    clock += delta_t;
-    if (clock >= PI / 10) clock = 0;
+    //    clock += delta_t;
+    //    if (clock >= PI / 10) clock = 0;
 
     // TODO (Part 2): Compute total force acting on each point mass.
     Vector3D totalExtAcceleration = accumulate(external_accelerations.begin(), external_accelerations.end(),
@@ -61,9 +64,9 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
     Vector3D totalExtForce = totalExtAcceleration * mass;
 
     // Wind EC: strength of the wind that depends on windSpeed parameter
-    double windStrength = (fabs(windSpeed) * 1.4 * (cos(clock * 20) + 1) + 2.8);
-    windStrength = (windSpeed < 0) ? windStrength : -windStrength;
-    Vector3D wind = windDirection * windStrength;
+    //    double windStrength = (fabs(windSpeed) * 1.4 * (cos(clock * 20) + 1) + 2.8);
+    //    windStrength = (windSpeed < 0) ? windStrength : -windStrength;
+    //    Vector3D wind = windDirection * windStrength;
 
     Vector3D centroid = {};
     for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
@@ -76,17 +79,18 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         // float adjust = (float) rand() / float(RAND_MAX) - 0.5;
         // wind += (adjust * (float) (3 * rand() / RAND_MAX - 1));
         // Wind EC: adding windForce to the total forces of the pm
-        if (windSpeed == 0) wind *= 0;
-        Vector3D windForce = wind * mass;
-        //pm->forces += windForce;
+        // if (windSpeed == 0) wind *= 0;
+        double cos_theta_wind = std::max(0.0, dot((pm->position - this->centroid), -windDirection));
+        Vector3D windForce = cos_theta_wind * windSpeed * windDirection;
+        pm->forces += windForce;
     }
     centroid /= (double)point_masses.size();
+    this->centroid = centroid;
     // Integrate pressure inside the soccer ball
     for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
         PointMass *pm = it.operator->();
         Vector3D dir = pm->position - centroid;
         pm->forces += (INTERNAL_PRESSURE * dir.unit()) / dir.norm();
-
     }
 
     for (auto it = springs.begin(); it != springs.end(); ++it) {
@@ -114,15 +118,14 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
 
         PointMass *pm = it.operator->();
 
-        // hack: initial "hit" force in first iteration
-        if (frame_num == 0) {
-            pm->forces += Vector3D(100000, 0, 0);
-        }
-
-        // hack: wind
-        if (frame_num < 5 && (i == 0 || i == 3 || i == 8 || i == 5 || i == 1)){
-            pm->forces += Vector3D(100000, 0, 100000);
-        }
+//        // hack: initial "hit" force in first iteration
+//        if (frame_num == 0) {
+//            pm->forces += Vector3D(100000, 0, 0);
+//        }
+//        // hack: spin
+//        if (frame_num < 5 && (i == 0 || i == 3 || i == 8 || i == 5 || i == 1)){
+//            pm->forces += Vector3D(100000, 0, 100000);
+//        }
 
         if (pm->pinned) continue;
         double d = bp->damping / 1000.0;

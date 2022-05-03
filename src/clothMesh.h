@@ -50,4 +50,10 @@ public:
   vector<Triangle *> triangles;
 }; // struct ClothMesh
 
+//class BallMesh {
+//public:
+//    ~BallMesh() {}
+//    vector <
+//};
+
 #endif // CLOTH_MESH_H

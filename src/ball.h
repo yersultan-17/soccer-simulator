@@ -40,7 +40,7 @@ struct Ball {
   void simulate(double frames_per_sec, double simulation_steps, BallParameters *cp,
                 vector<Vector3D> external_accelerations,
                 vector<CollisionObject *> *collision_objects,
-                float windSpeed, const Vector3D& windDirection);
+                float windSpeed, Vector3D& windDirection);
 
   void reset();
   void buildBallMesh();
@@ -53,10 +53,12 @@ struct Ball {
   vector<Spring> springs;
   ClothMesh *ballMesh;
 
+
   // Soccer ball components
   vector<vector<double>> vertices;
   vector<vector<int>> edges;
   vector<vector<int>> faces;
+  Vector3D centroid; // recalculated each timestep
 
   // Wind
   double clock;

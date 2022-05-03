@@ -91,7 +91,7 @@ inline void printProgramInfoLog(GLuint obj)
 
 inline GLuint loadShaders(const std::vector<std::string>& vertList, const std::vector<std::string>& fragList)
 {
-  char *vs,*fs;
+  char *vs, *fs;
 
   GLuint p = glCreateProgram();
 
