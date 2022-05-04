@@ -24,6 +24,41 @@
 using namespace nanogui;
 using namespace std;
 
+float skyboxVertices[] =
+{
+    //   Coordinates
+    -1.0f, -1.0f,  1.0f,//        7--------6
+    1.0f, -1.0f,  1.0f,//       /|       /|
+    1.0f, -1.0f, -1.0f,//      4--------5 |
+    -1.0f, -1.0f, -1.0f,//      | |      | |
+    -1.0f,  1.0f,  1.0f,//      | 3------|-2
+    1.0f,  1.0f,  1.0f,//      |/       |/
+    1.0f,  1.0f, -1.0f,//      0--------1
+    -1.0f,  1.0f, -1.0f
+};
+
+unsigned int skyboxIndices[] =
+{
+    // Right
+    1, 2, 6,
+    6, 5, 1,
+    // Left
+    0, 4, 7,
+    7, 3, 0,
+    // Top
+    4, 5, 6,
+    6, 7, 4,
+    // Bottom
+    0, 3, 2,
+    2, 1, 0,
+    // Back
+    0, 1, 5,
+    5, 4, 0,
+    // Front
+    3, 7, 6,
+    6, 2, 3
+};
+
 Vector3D load_texture(int frame_idx, GLuint handle, const char* where) {
   Vector3D size_retval;
   
@@ -103,8 +138,33 @@ void ClothSimulator::load_textures() {
   load_cubemap(5, m_gl_cubemap_tex, cubemap_fnames);
   std::cout << "Loaded cubemap texture" << std::endl;
 }
+void ClothSimulator::load_skybox_shader() {
+    std::shared_ptr<GLShader> skybox_shader = make_shared<GLShader>();
+    skybox_shader->initFromFiles("Skybox", "Skybox.vert", "Skybox.frag");
+
+    glDepthMask(GL_FALSE);
+    // Create VAO, VBO, and EBO for the skybox
+    unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glGenBuffers(1, &skyboxEBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDepthMask(GL_TRUE);
+    skybox_shader->bind();
+    this->skybox_shader = skybox_shader;
+}
 
 void ClothSimulator::load_shaders() {
+
   std::set<std::string> shader_folder_contents;
   bool success = FileUtils::list_files_in_directory(m_project_root + "/shaders", shader_folder_contents);
   if (!success) {
@@ -168,9 +228,10 @@ void ClothSimulator::load_shaders() {
 ClothSimulator::ClothSimulator(std::string project_root, Screen *screen)
 : m_project_root(project_root) {
   this->screen = screen;
-  
+
   this->load_shaders();
   this->load_textures();
+  this->load_skybox_shader();
 
   glEnable(GL_PROGRAM_POINT_SIZE);
   glEnable(GL_DEPTH_TEST);
@@ -266,21 +327,18 @@ void ClothSimulator::drawContents() {
   }
 
   // Before other shaders, bind the skybox shader
-  GLShader skybox_shader = GLShader();
-  skybox_shader.initFromFiles("Skybox", "Skybox.vert", "Skybox.frag");
-  skybox_shader.bind();
+
 
   Matrix4f view = getViewMatrix();
   Matrix4f projection = getProjectionMatrix();
   Matrix4f viewProjection = projection * view;
-  skybox_shader.bind();
-
-  skybox_shader.setUniform("u_view_projection", viewProjection, false);
-
-  skybox_shader.setUniform("u_texture_cubemap", m_gl_cubemap_tex, false);
-  skybox_shader.drawArray(GL_TRIANGLES, 0, 36);
 
 
+  skybox_shader->setUniform("u_view_projection", viewProjection, false);
+
+  skybox_shader->setUniform("u_texture_cubemap", m_gl_cubemap_tex, false);
+  skybox_shader->drawArray(GL_TRIANGLES, 0, 36);
+  skybox_shader->bind();
 
   // Bind the active shader
   UserShader& active_shader = shaders[active_shader_idx];

@@ -48,6 +48,7 @@ private:
   
   void load_shaders();
   void load_textures();
+  void load_skybox_shader();
   
   // File management
   
@@ -86,6 +87,7 @@ private:
   int active_shader_idx = 0;
 
   vector<UserShader> shaders;
+  std::shared_ptr<GLShader> skybox_shader;
   vector<std::string> shaders_combobox_names;
   
   // OpenGL textures
