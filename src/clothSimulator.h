@@ -44,7 +44,9 @@ private:
   void drawWireframe(GLShader &shader);
   void drawBallWireframe(GLShader &shader);
   void drawNormals(GLShader &shader);
+  void drawBallNormals(GLShader &shader);
   void drawPhong(GLShader &shader);
+  void drawBallPhong(GLShader &shader);
   
   void load_shaders();
   void load_textures();

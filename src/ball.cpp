@@ -5,17 +5,19 @@
 #include <numeric>
 
 #include "ball.h"
+#include "ballMesh.h"
 #include "collision/plane.h"
 #include "collision/sphere.h"
 
 using namespace std;
 
 const double PHI = (1 + sqrt(5)) / 2;
-const double INTERNAL_PRESSURE = 10000.0;
-int frame_num = 0;
+const double INTERNAL_PRESSURE = 100000.0;
 
 Ball::Ball() {
+    frame_num = 0;
     buildShape();
+    buildBallMesh();
 }
 
 //Ball::~Ball() {
@@ -116,12 +118,12 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
 
         // hack: initial "hit" force in first iteration
         if (frame_num == 0) {
-            pm->forces += Vector3D(100000, 0, 0);
+            pm->forces += Vector3D(5000, 0, 0);
         }
 
         // hack: wind
         if (frame_num < 5 && (i == 0 || i == 3 || i == 8 || i == 5 || i == 1)){
-            pm->forces += Vector3D(100000, 0, 100000);
+            pm->forces += Vector3D(0, 0, 5000);
         }
 
         if (pm->pinned) continue;
@@ -177,5 +179,92 @@ void Ball::reset() {
     pm->last_position = pm->start_position;
     pm++;
   }
+  frame_num = 0;
 }
 
+void Ball::setupNormals() {
+    for (auto face: faces) {
+        PointMass *pm_A = &point_masses[face[0]];
+        PointMass *pm_B = &point_masses[face[1]];
+        PointMass *pm_C = &point_masses[face[2]];
+        Vector3D normal = cross(pm_C - pm_B, pm_B - pm_A).unit();
+        if (face.size() == 6) normal *= 1.5;
+        for (auto faceIdx: face) {
+            PointMass *pm = &point_masses[faceIdx];
+            pm->ballnorm -= normal;
+        }
+    }
+    for (auto pm: point_masses) {
+        pm.ballnorm = pm.ballnorm.unit();
+    }
+}
+
+void Ball::buildBallMesh() {
+    if (point_masses.size() == 0) return;
+
+    BallMesh *ballMesh = new BallMesh();
+    vector<Triangle *> triangles;
+
+    Vector3D uv_white = Vector3D(0.5, 0.5, 0.);
+    Vector3D uv_black = Vector3D(0.9, 0.9, 0.);
+    Vector3D uv;
+    // Create vector of triangles
+    for (int i = 0; i < faces.size(); i++) {
+        vector<int> face = faces[i];
+        for (int j = 1; j < face.size() - 1; j++) {
+            PointMass *pm_A = &point_masses[face[0]];
+            PointMass *pm_B = &point_masses[face[j]];
+            PointMass *pm_C = &point_masses[face[j+1]];
+            if (face.size() == 5){
+                uv = uv_black;
+            } else if (face.size() == 6){
+                uv = uv_white;
+            }
+            triangles.push_back(new Triangle(pm_A, pm_C, pm_B,
+                                             uv, uv, uv));
+        }
+    }
+
+    for (int i = 0; i < triangles.size(); i++) {
+        Triangle *t = triangles[i];
+
+        // Allocate new halfedges on heap
+        Halfedge *h1 = new Halfedge();
+        Halfedge *h2 = new Halfedge();
+        Halfedge *h3 = new Halfedge();
+
+        // Allocate new edges on heap
+        Edge *e1 = new Edge();
+        Edge *e2 = new Edge();
+        Edge *e3 = new Edge();
+
+        // Assign a halfedge pointer to the triangle
+        t->halfedge = h1;
+
+        // Assign halfedge pointers to point masses
+        t->pm1->halfedge = h1;
+        t->pm2->halfedge = h2;
+        t->pm3->halfedge = h3;
+
+        // Update all halfedge pointers
+        h1->edge = e1;
+        h1->next = h2;
+        h1->pm = t->pm1;
+        h1->triangle = t;
+
+        h2->edge = e2;
+        h2->next = h3;
+        h2->pm = t->pm2;
+        h2->triangle = t;
+
+        h3->edge = e3;
+        h3->next = h1;
+        h3->pm = t->pm3;
+        h3->triangle = t;
+    }
+
+    ballMesh->triangles = triangles;
+    this->ballMesh = ballMesh;
+
+    setupNormals();
+}

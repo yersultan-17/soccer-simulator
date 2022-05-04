@@ -288,7 +288,8 @@ void ClothSimulator::drawContents() {
     drawBallWireframe(shader);
     break;
   case NORMALS:
-    drawNormals(shader);
+    drawBallNormals(shader);
+    //drawNormals(shader);
     break;
   case PHONG:
   
@@ -323,7 +324,8 @@ void ClothSimulator::drawContents() {
 
     shader.setUniform("u_texture_cubemap", 5, false);
     shader.setUniform("u_rand", (float)(tm->tm_sec), false);
-    drawPhong(shader);
+    drawBallPhong(shader);
+    //drawPhong(shader);
     break;
   }
 
@@ -422,6 +424,38 @@ void ClothSimulator::drawWireframe(GLShader &shader) {
   shader.drawArray(GL_LINES, 0, num_springs * 2);
 }
 
+void ClothSimulator::drawBallNormals(GLShader &shader) {
+    int num_tris = ball->ballMesh->triangles.size();
+
+    MatrixXf positions(4, num_tris * 3);
+    MatrixXf normals(4, num_tris * 3);
+
+    for (int i = 0; i < num_tris; i++) {
+        Triangle *tri = ball->ballMesh->triangles[i];
+
+        Vector3D p1 = tri->pm1->position;
+        Vector3D p2 = tri->pm2->position;
+        Vector3D p3 = tri->pm3->position;
+
+        Vector3D n1 = tri->pm1->normal();
+        Vector3D n2 = tri->pm2->normal();
+        Vector3D n3 = tri->pm3->normal();
+
+        positions.col(i * 3) << p1.x, p1.y, p1.z, 1.0;
+        positions.col(i * 3 + 1) << p2.x, p2.y, p2.z, 1.0;
+        positions.col(i * 3 + 2) << p3.x, p3.y, p3.z, 1.0;
+
+        normals.col(i * 3) << n1.x, n1.y, n1.z, 0.0;
+        normals.col(i * 3 + 1) << n2.x, n2.y, n2.z, 0.0;
+        normals.col(i * 3 + 2) << n3.x, n3.y, n3.z, 0.0;
+    }
+
+    shader.uploadAttrib("in_position", positions, false);
+    shader.uploadAttrib("in_normal", normals, false);
+
+    shader.drawArray(GL_TRIANGLES, 0, num_tris * 3);
+}
+
 void ClothSimulator::drawNormals(GLShader &shader) {
   int num_tris = cloth->clothMesh->triangles.size();
 
@@ -452,6 +486,51 @@ void ClothSimulator::drawNormals(GLShader &shader) {
   shader.uploadAttrib("in_normal", normals, false);
 
   shader.drawArray(GL_TRIANGLES, 0, num_tris * 3);
+}
+
+void ClothSimulator::drawBallPhong(GLShader &shader) {
+    int num_tris = ball->ballMesh->triangles.size();
+
+    MatrixXf positions(4, num_tris * 3);
+    MatrixXf normals(4, num_tris * 3);
+    MatrixXf uvs(2, num_tris * 3);
+    MatrixXf tangents(4, num_tris * 3);
+
+    for (int i = 0; i < num_tris; i++) {
+        Triangle *tri = ball->ballMesh->triangles[i];
+
+        Vector3D p1 = tri->pm1->position;
+        Vector3D p2 = tri->pm2->position;
+        Vector3D p3 = tri->pm3->position;
+
+        Vector3D n1 = tri->pm1->normal();
+        Vector3D n2 = tri->pm2->normal();
+        Vector3D n3 = tri->pm3->normal();
+
+        positions.col(i * 3    ) << p1.x, p1.y, p1.z, 1.0;
+        positions.col(i * 3 + 1) << p2.x, p2.y, p2.z, 1.0;
+        positions.col(i * 3 + 2) << p3.x, p3.y, p3.z, 1.0;
+
+        normals.col(i * 3    ) << n1.x, n1.y, n1.z, 0.0;
+        normals.col(i * 3 + 1) << n2.x, n2.y, n2.z, 0.0;
+        normals.col(i * 3 + 2) << n3.x, n3.y, n3.z, 0.0;
+
+        uvs.col(i * 3    ) << tri->uv1.x, tri->uv1.y;
+        uvs.col(i * 3 + 1) << tri->uv2.x, tri->uv2.y;
+        uvs.col(i * 3 + 2) << tri->uv3.x, tri->uv3.y;
+
+        tangents.col(i * 3    ) << 1.0, 0.0, 0.0, 1.0;
+        tangents.col(i * 3 + 1) << 1.0, 0.0, 0.0, 1.0;
+        tangents.col(i * 3 + 2) << 1.0, 0.0, 0.0, 1.0;
+    }
+
+
+    shader.uploadAttrib("in_position", positions, false);
+    shader.uploadAttrib("in_normal", normals, false);
+    shader.uploadAttrib("in_uv", uvs, false);
+    shader.uploadAttrib("in_tangent", tangents, false);
+
+    shader.drawArray(GL_TRIANGLES, 0, num_tris * 3);
 }
 
 void ClothSimulator::drawPhong(GLShader &shader) {
@@ -639,7 +718,7 @@ bool ClothSimulator::keyCallbackEvent(int key, int scancode, int action,
       break;
     case 'r':
     case 'R':
-      cloth->reset();
+      ball->reset();
       break;
     case ' ':
       resetCamera();
@@ -731,10 +810,10 @@ void ClothSimulator::initGUI(Screen *screen) {
     fb->setEditable(true);
     fb->setFixedSize(Vector2i(100, 20));
     fb->setFontSize(14);
-    fb->setValue(cp->density / 10);
+    fb->setValue(bp->density / 10);
     fb->setUnits("g/cm^2");
     fb->setSpinnable(true);
-    fb->setCallback([this](float value) { cp->density = (double)(value * 10); });
+    fb->setCallback([this](float value) { bp->density = (double)(value * 10); });
 
     new Label(panel, "ks :", "sans-bold");
 
@@ -742,11 +821,11 @@ void ClothSimulator::initGUI(Screen *screen) {
     fb->setEditable(true);
     fb->setFixedSize(Vector2i(100, 20));
     fb->setFontSize(14);
-    fb->setValue(cp->ks);
+    fb->setValue(bp->ks);
     fb->setUnits("N/m");
     fb->setSpinnable(true);
     fb->setMinValue(0);
-    fb->setCallback([this](float value) { cp->ks = value; });
+    fb->setCallback([this](float value) { bp->ks = value; });
   }
 
   // Simulation constants
@@ -793,12 +872,12 @@ void ClothSimulator::initGUI(Screen *screen) {
         new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 5));
 
     Slider *slider = new Slider(panel);
-    slider->setValue(cp->damping);
+    slider->setValue(bp->damping);
     slider->setFixedWidth(105);
 
     TextBox *percentage = new TextBox(panel);
     percentage->setFixedWidth(75);
-    percentage->setValue(to_string(cp->damping));
+    percentage->setValue(to_string(bp->damping));
     percentage->setUnits("%");
     percentage->setFontSize(14);
 
@@ -806,7 +885,7 @@ void ClothSimulator::initGUI(Screen *screen) {
       percentage->setValue(std::to_string(value));
     });
     slider->setFinalCallback([&](float value) {
-      cp->damping = (double)value;
+      bp->damping = (double)value;
       // cout << "Final slider value: " << (int)(value * 100) << endl;
     });
   }

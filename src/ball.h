@@ -7,7 +7,7 @@
 
 #include "CGL/CGL.h"
 #include "CGL/misc.h"
-#include "clothMesh.h"
+#include "ballMesh.h"
 #include "collision/collisionObject.h"
 #include "spring.h"
 
@@ -44,6 +44,7 @@ struct Ball {
 
   void reset();
   void buildBallMesh();
+  void setupNormals();
 
   // Ball properties
   double side_length;
@@ -51,12 +52,15 @@ struct Ball {
   // Cloth components
   vector<PointMass> point_masses;
   vector<Spring> springs;
-  ClothMesh *ballMesh;
+  BallMesh *ballMesh;
 
   // Soccer ball components
   vector<vector<double>> vertices;
   vector<vector<int>> edges;
   vector<vector<int>> faces;
+
+  // Frame number
+  int frame_num;
 
   // Wind
   double clock;

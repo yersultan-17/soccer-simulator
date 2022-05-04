@@ -330,7 +330,7 @@ bool loadObjectsFromFile(string filename, Cloth *cloth, ClothParameters *cp, Bal
         vector<vector<int>> faces;
         auto it_faces = object.find("faces");
         if (it_faces != object.end()) {
-            vector<json> labels = *it_edges;
+            vector<json> labels = *it_faces;
             for (auto label : labels) {
                 vector<int> face = label;
                 faces.push_back(face);
@@ -584,7 +584,7 @@ int main(int argc, char **argv) {
   cloth.buildClothMesh();
 
   ball.buildShape();
-  //ball.buildBallMesh();
+  ball.buildBallMesh();
 
   // Initialize the ClothSimulator object
   app = new ClothSimulator(project_root, screen);

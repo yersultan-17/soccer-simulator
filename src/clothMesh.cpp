@@ -5,7 +5,7 @@ using namespace CGL;
 using namespace std;
 
 Vector3D PointMass::normal() {
-    return position.unit();
+    return ballnorm;
 //  Vector3D n(0, 0, 0);
 //
 //  Halfedge *start = halfedge;
