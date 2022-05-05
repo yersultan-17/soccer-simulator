@@ -12,7 +12,7 @@
 using namespace std;
 
 const double PHI = (1 + sqrt(5)) / 2;
-const double INTERNAL_PRESSURE = 100000.0;
+const double INTERNAL_PRESSURE = 20000.0;
 
 Ball::Ball() {
     frame_num = 0;
@@ -42,18 +42,22 @@ void Ball::buildShape() {
   }
 }
 
-bool isSpringEnabled(Spring *s, BallParameters *bp) {
-  return true;
+void Ball::collide(PointMass &pm) {
+    if ((pm.position - centroid).norm() > radius) return;
+    Vector3D tangentPoint = radius * (pm.position - centroid).unit() + centroid;
+    Vector3D correction = tangentPoint - pm.last_position;
+    pm.position = pm.last_position + correction * 1.5;
+
 }
 
 void Ball::simulate(double frames_per_sec, double simulation_steps, BallParameters *bp,
                      vector<Vector3D> external_accelerations,
-                     vector<CollisionObject *> *collision_objects,
-                     float windSpeed, const Vector3D& windDirection) {
+                    vector<CollisionObject *> *collision_objects,
+                    float windSpeed, const Vector3D& windDirection) {
     double mass = bp->density / 60.f;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
-    // Wind EC: keeping track of global clock of wind that resets periodically
+    // Wind EC: keeping track of global c`lock of wind that resets periodically
     clock += delta_t;
     if (clock >= PI / 10) clock = 0;
 
@@ -62,50 +66,28 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
                                                Vector3D());
     Vector3D totalExtForce = totalExtAcceleration * mass;
 
-    // Wind EC: strength of the wind that depends on windSpeed parameter
-    double windStrength = (fabs(windSpeed) * 1.4 * (cos(clock * 20) + 1) + 2.8);
-    windStrength = (windSpeed < 0) ? windStrength : -windStrength;
-    Vector3D wind = windDirection * windStrength;
-
-    Vector3D centroid = {};
     for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
         PointMass *pm = it.operator->();
         pm->forces = Vector3D();
         pm->forces += Vector3D(totalExtForce);
-        centroid += pm->position;
-
-        // Wind EC: introducing random small movements to the wind effect for each pm
-        // float adjust = (float) rand() / float(RAND_MAX) - 0.5;
-        // wind += (adjust * (float) (3 * rand() / RAND_MAX - 1));
-        // Wind EC: adding windForce to the total forces of the pm
-        if (windSpeed == 0) wind *= 0;
-        Vector3D windForce = wind * mass;
-        //pm->forces += windForce;
-    }
-    centroid /= (double)point_masses.size();
-    // Integrate pressure inside the soccer ball
-    for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
-        PointMass *pm = it.operator->();
+        // Integrate pressure inside the soccer bal
         Vector3D dir = pm->position - centroid;
         pm->forces += (INTERNAL_PRESSURE * dir.unit()) / dir.norm();
-
     }
 
     for (auto it = springs.begin(); it != springs.end(); ++it) {
         Spring *s = it.operator->();
-        if (isSpringEnabled(s, bp)) {
-            PointMass *pm_a = s->pm_a, *pm_b = s->pm_b;
-            double f = bp->ks * ((pm_a->position - pm_b->position).norm() - s->rest_length);
-            if (s->spring_type == BENDING) {
-                // The force should be weaker
-                double bendingCoefficient = 0.2;
-                f *= bendingCoefficient;
-            }
-            Vector3D force = (pm_a->position - pm_b->position).unit();
-            force *= f;
-            pm_a->forces -= force;
-            pm_b->forces += force;
+        PointMass *pm_a = s->pm_a, *pm_b = s->pm_b;
+        double f = bp->ks * ((pm_a->position - pm_b->position).norm() - s->rest_length);
+        if (s->spring_type == BENDING) {
+            // The force should be weaker
+            double bendingCoefficient = 0.2;
+            f *= bendingCoefficient;
         }
+        Vector3D force = (pm_a->position - pm_b->position).unit();
+        force *= f;
+        pm_a->forces -= force;
+        pm_b->forces += force;
     }
 
 
@@ -117,14 +99,14 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         PointMass *pm = it.operator->();
 
         // hack: initial "hit" force in first iteration
-        if (frame_num == 0) {
-            pm->forces += Vector3D(5000, 0, 0);
+        if (frame_num < 0) {
+            pm->forces += Vector3D(50000, 50000, 50000);
         }
 
-        // hack: wind
-        if (frame_num < 5 && (i == 0 || i == 3 || i == 8 || i == 5 || i == 1)){
-            pm->forces += Vector3D(0, 0, 5000);
-        }
+        Vector3D radiusVec = (pm->position - centroid).unit();
+        Vector3D spin_around = Vector3D{0, 1, 0};
+        Vector3D spin_dir = cross(radiusVec, spin_around);
+        //pm->forces += 500 * spin_dir;
 
         if (pm->pinned) continue;
         double d = bp->damping / 1000.0;
@@ -135,12 +117,6 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         i += 1;
     }
     frame_num += 1;
-
-    // Handle self-collisions.
-//  build_spatial_map();
-//  for (auto & pm : point_masses) {
-//    self_collide(pm, simulation_steps);
-//  }
 
   for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
     PointMass *pm = it.operator->();
@@ -165,6 +141,18 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         }
     }
 
+    centroid = 0;
+    for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
+        PointMass *bpm = it.operator->();
+        centroid += bpm->position;
+    }
+    centroid /= (double)point_masses.size();
+    radius = -1;
+    for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
+        PointMass *bpm = it.operator->();
+        double dist = (bpm->position - centroid).norm();
+        if (dist > radius) radius = dist;
+    }
 
 }
 
@@ -205,7 +193,7 @@ void Ball::buildBallMesh() {
     BallMesh *ballMesh = new BallMesh();
     vector<Triangle *> triangles;
 
-    Vector3D uv_white = Vector3D(0.5, 0.5, 0.);
+    Vector3D uv_white = Vector3D(0.1, 0.2, 0.);
     Vector3D uv_black = Vector3D(0.9, 0.9, 0.);
     Vector3D uv;
     // Create vector of triangles

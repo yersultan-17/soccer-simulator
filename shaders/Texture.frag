@@ -5,6 +5,7 @@ uniform vec3 u_light_pos;
 uniform vec3 u_light_intensity;
 
 uniform sampler2D u_texture_1;
+uniform sampler2D u_texture_2;
 
 in vec4 v_position;
 in vec4 v_normal;

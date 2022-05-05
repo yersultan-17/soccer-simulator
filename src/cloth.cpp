@@ -143,7 +143,7 @@ void Cloth::simulate(double frames_per_sec, double simulation_steps, ClothParame
     // Wind EC: adding windForce to the total forces of the pm
     if (windSpeed == 0) wind *= 0;
     Vector3D windForce = wind * mass;
-    pm->forces += windForce;
+    //pm->forces += windForce;
   }
   for (auto it = springs.begin(); it != springs.end(); ++it) {
     Spring *s = it.operator->();

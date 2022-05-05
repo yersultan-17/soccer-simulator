@@ -45,9 +45,7 @@ struct Ball {
   void reset();
   void buildBallMesh();
   void setupNormals();
-
-  // Ball properties
-  double side_length;
+  void collide(PointMass &pm);
 
   // Cloth components
   vector<PointMass> point_masses;
@@ -58,6 +56,9 @@ struct Ball {
   vector<vector<double>> vertices;
   vector<vector<int>> edges;
   vector<vector<int>> faces;
+
+  Vector3D centroid;
+  double radius;
 
   // Frame number
   int frame_num;

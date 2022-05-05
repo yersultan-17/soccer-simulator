@@ -76,11 +76,11 @@ void ClothSimulator::load_textures() {
   glGenTextures(1, &m_gl_texture_6);
   glGenTextures(1, &m_gl_cubemap_tex);
   
-  m_gl_texture_1_size = load_texture(1, m_gl_texture_1, (m_project_root + "/textures/texture_1.png").c_str());
+  m_gl_texture_1_size = load_texture(1, m_gl_texture_1, (m_project_root + "/textures/grass.jpeg").c_str());
   m_gl_texture_2_size = load_texture(2, m_gl_texture_2, (m_project_root + "/textures/texture_2.png").c_str());
   m_gl_texture_3_size = load_texture(3, m_gl_texture_3, (m_project_root + "/textures/texture_3.png").c_str());
   m_gl_texture_4_size = load_texture(4, m_gl_texture_4, (m_project_root + "/textures/texture_4.png").c_str());
-  m_gl_texture_6_size = load_texture(6, m_gl_texture_6, (m_project_root + "/textures/texture_kz.jpeg").c_str());
+  m_gl_texture_6_size = load_texture(6, m_gl_texture_6, (m_project_root + "/textures/ballTexture.png").c_str());
   
   std::cout << "Texture 1 loaded with size: " << m_gl_texture_1_size << std::endl;
   std::cout << "Texture 2 loaded with size: " << m_gl_texture_2_size << std::endl;
@@ -186,14 +186,21 @@ ClothSimulator::~ClothSimulator() {
 
   if (cloth) delete cloth;
   if (cp) delete cp;
+  if (ball) delete ball;
+  if (bp) delete bp;
+  if (goalnet) delete goalnet;
+  if (gnp) delete gnp;
   if (collision_objects) delete collision_objects;
 }
 
 void ClothSimulator::loadCloth(Cloth *cloth) { this->cloth = cloth; }
 void ClothSimulator::loadBall(Ball *ball) { this->ball = ball; }
+void ClothSimulator::loadGoalnet(Goalnet *goalnet) { this->goalnet = goalnet; }
+
 
 void ClothSimulator::loadClothParameters(ClothParameters *cp) { this->cp = cp; }
 void ClothSimulator::loadBallParameters(BallParameters *bp) { this->bp = bp; }
+void ClothSimulator::loadGoalnetParameters(GoalnetParameters *gnp) { this->gnp = gnp; }
 
 void ClothSimulator::loadCollisionObjects(vector<CollisionObject *> *objects) { this->collision_objects = objects; }
 
@@ -256,8 +263,8 @@ void ClothSimulator::drawContents() {
     vector<Vector3D> external_accelerations = {gravity};
 
     for (int i = 0; i < simulation_steps; i++) {
-      //cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
       ball->simulate(frames_per_sec, simulation_steps, bp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
+      goalnet->simulate(frames_per_sec, simulation_steps, gnp, external_accelerations, collision_objects, ball, windSpeed, activeWindDirection);
     }
   }
 
@@ -265,8 +272,8 @@ void ClothSimulator::drawContents() {
 
   const UserShader& active_shader = shaders[active_shader_idx];
 
-  GLShader &shader = *active_shader.nanogui_shader;
-  shader.bind();
+    GLShader &shader = *active_shader.nanogui_shader;
+    shader.bind();
 
   // Prepare the camera projection matrix
 
@@ -281,15 +288,18 @@ void ClothSimulator::drawContents() {
   shader.setUniform("u_model", model);
   shader.setUniform("u_view_projection", viewProjection);
 
+  shader.setUniform("u_color", color, false);
+  shader.setUniform("u_texture_6", 6, false);
+  drawGoalnetWireframe(shader);
   switch (active_shader.type_hint) {
   case WIREFRAME:
     shader.setUniform("u_color", color, false);
-    //drawWireframe(shader);
+    //drawGoalnetWireframe(shader);
     drawBallWireframe(shader);
     break;
   case NORMALS:
+    drawGoalnetWireframe(shader);
     drawBallNormals(shader);
-    //drawNormals(shader);
     break;
   case PHONG:
   
@@ -325,12 +335,12 @@ void ClothSimulator::drawContents() {
     shader.setUniform("u_texture_cubemap", 5, false);
     shader.setUniform("u_rand", (float)(tm->tm_sec), false);
     drawBallPhong(shader);
-    //drawPhong(shader);
     break;
   }
 
   for (CollisionObject *co : *collision_objects) {
-    co->render(shader);
+      shader.setUniform("u_texture_6", 1, false);
+      co->render(shader);
   }
 }
 
@@ -360,6 +370,43 @@ void ClothSimulator::drawBallWireframe(GLShader &shader) {
 
         //normals.col(si) << na.x, na.y, na.z, 0.0;
         //normals.col(si + 1) << nb.x, nb.y, nb.z, 0.0;
+
+        si += 2;
+    }
+
+    //shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
+    shader.uploadAttrib("in_position", positions, false);
+    // Commented out: the wireframe shader does not have this attribute
+    //shader.uploadAttrib("in_normal", normals);
+
+    shader.drawArray(GL_LINES, 0, num_springs * 2);
+}
+
+void ClothSimulator::drawGoalnetWireframe(GLShader &shader) {
+    int num_springs = 2 * goalnet->num_width_points * goalnet->num_height_points -
+            goalnet->num_width_points - goalnet->num_height_points;
+
+    MatrixXf positions(4, num_springs * 2);
+    MatrixXf normals(4, num_springs * 2);
+
+    // Draw springs as lines
+
+    int si = 0;
+
+    for (int i = 0; i < goalnet->springs.size(); i++) {
+        Spring s = goalnet->springs[i];
+
+        Vector3D pa = s.pm_a->position;
+        Vector3D pb = s.pm_b->position;
+
+        Vector3D na = s.pm_a->normal();
+        Vector3D nb = s.pm_b->normal();
+
+        positions.col(si) << pa.x, pa.y, pa.z, 1.0;
+        positions.col(si + 1) << pb.x, pb.y, pb.z, 1.0;
+
+        normals.col(si) << na.x, na.y, na.z, 0.0;
+        normals.col(si + 1) << nb.x, nb.y, nb.z, 0.0;
 
         si += 2;
     }
@@ -719,6 +766,7 @@ bool ClothSimulator::keyCallbackEvent(int key, int scancode, int action,
     case 'r':
     case 'R':
       ball->reset();
+      goalnet->reset();
       break;
     case ' ':
       resetCamera();
