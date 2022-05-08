@@ -36,21 +36,31 @@ void Plane::render(GLShader &shader) {
 
   MatrixXf positions(3, 4);
   MatrixXf normals(3, 4);
+  MatrixXf uvs(2, 4);
 
-  positions.col(0) << sPoint + 50 * (sCross + sParallel);
-  positions.col(1) << sPoint + 50 * (sCross - sParallel);
-  positions.col(2) << sPoint + 50 * (-sCross + sParallel);
-  positions.col(3) << sPoint + 50 * (-sCross - sParallel);
+
+  positions.col(0) << sPoint + 100 * (sCross + sParallel);
+  positions.col(1) << sPoint + 100 * (sCross - sParallel);
+  positions.col(2) << sPoint + 100 * (-sCross + sParallel);
+  positions.col(3) << sPoint + 100 * (-sCross - sParallel);
 
   normals.col(0) << sNormal;
   normals.col(1) << sNormal;
   normals.col(2) << sNormal;
   normals.col(3) << sNormal;
 
+  uvs.col(0) << 0, 0;
+  uvs.col(1) << 0, 1;
+  uvs.col(2) << 1, 1;
+  uvs.col(3) << 1, 0;
+
   if (shader.uniform("u_color", false) != -1) {
     shader.setUniform("u_color", color);
   }
   shader.uploadAttrib("in_position", positions);
+  if (shader.attrib("in_uv", false) != -1) {
+    shader.uploadAttrib("in_uv", uvs);
+  }
   if (shader.attrib("in_normal", false) != -1) {
     shader.uploadAttrib("in_normal", normals);
   }

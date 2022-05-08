@@ -12,7 +12,7 @@ struct Sphere : public CollisionObject {
 public:
   Sphere(const Vector3D &origin, double radius, double friction, int num_lat = 40, int num_lon = 40)
       : origin(origin), radius(radius), radius2(radius * radius),
-        friction(friction), m_sphere_mesh(Misc::SphereMesh(num_lat, num_lon)) {}
+        friction(friction), m_sphere_mesh(Misc::SphereMesh(num_lat, num_lon)) {objectIndex = 0;}
 
   void render(GLShader &shader);
   void collide(PointMass &pm);
@@ -21,9 +21,7 @@ private:
   Vector3D origin;
   double radius;
   double radius2;
-
   double friction;
-  
   Misc::SphereMesh m_sphere_mesh;
 };
 

@@ -13,14 +13,13 @@ using namespace std;
 struct Plane : public CollisionObject {
 public:
   Plane(const Vector3D &point, const Vector3D &normal, double friction)
-      : point(point), normal(normal.unit()), friction(friction) {}
+      : point(point), normal(normal.unit()), friction(friction) {objectIndex = 1;}
 
   void render(GLShader &shader);
   void collide(PointMass &pm);
 
   Vector3D point;
   Vector3D normal;
-
   double friction;
 };
 

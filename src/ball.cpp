@@ -16,6 +16,7 @@ const double INTERNAL_PRESSURE = 20000.0;
 
 Ball::Ball() {
     frame_num = 0;
+    windOn = true;
     buildShape();
     buildBallMesh();
 }
@@ -32,7 +33,8 @@ Ball::Ball() {
 void Ball::buildShape() {
   // Build a truncated icosahedron of masses and springs.
   for (auto vertex: vertices) {
-      point_masses.emplace_back(Vector3D(vertex[0], vertex[1], vertex[2]), false);
+      double scale = 0.7;
+      point_masses.emplace_back(scale * Vector3D(vertex[0], vertex[1], vertex[2]), false);
   }
   // Now, let's set up the springs
   for (auto edge: edges) {
@@ -44,10 +46,14 @@ void Ball::buildShape() {
 
 void Ball::collide(PointMass &pm) {
     if ((pm.position - centroid).norm() > radius) return;
+    windOn = false;
     Vector3D tangentPoint = radius * (pm.position - centroid).unit() + centroid;
     Vector3D correction = tangentPoint - pm.last_position;
-    pm.position = pm.last_position + correction * 1.5;
-
+    pm.position = pm.last_position + correction * 1.8;
+    for (auto it = point_masses.begin(); it != point_masses.end(); ++it) {
+        PointMass *pm = it.operator->();
+        pm->position -= correction * 0.06;
+    }
 }
 
 void Ball::simulate(double frames_per_sec, double simulation_steps, BallParameters *bp,
@@ -56,6 +62,8 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
                     float windSpeed, const Vector3D& windDirection) {
     double mass = bp->density / 60.f;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
+    windSpeed = 500.0;
+    Vector3D windDir = Vector3D(1, 0, 0);
 
     // Wind EC: keeping track of global c`lock of wind that resets periodically
     clock += delta_t;
@@ -73,6 +81,11 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         // Integrate pressure inside the soccer bal
         Vector3D dir = pm->position - centroid;
         pm->forces += (INTERNAL_PRESSURE * dir.unit()) / dir.norm();
+        if (windOn) {
+            double cos_theta_wind = std::max(0.0, dot((pm->position - centroid), -windDir));
+            Vector3D windForce = cos_theta_wind * windSpeed * windDir;
+            pm->forces += windForce;
+        }
     }
 
     for (auto it = springs.begin(); it != springs.end(); ++it) {
@@ -99,17 +112,18 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         PointMass *pm = it.operator->();
 
         // hack: initial "hit" force in first iteration
-        if (frame_num < 0) {
-            pm->forces += Vector3D(50000, 50000, 50000);
+        if (frame_num < 10) {
+            pm->forces += Vector3D(-20000, 10000, 50000);
+            //pm->forces += Vector3D(0, 5000, 50000);
         }
 
         Vector3D radiusVec = (pm->position - centroid).unit();
         Vector3D spin_around = Vector3D{0, 1, 0};
         Vector3D spin_dir = cross(radiusVec, spin_around);
-        //pm->forces += 500 * spin_dir;
+        pm->forces += 5000 * (pm->position - pm->last_position).norm() * spin_dir;
 
         if (pm->pinned) continue;
-        double d = bp->damping / 1000.0;
+        double d = bp->damping / 5000.0;
         Vector3D updated =
                 pm->position + (1.0 - d) * (pm->position - pm->last_position) + (pm->forces / mass) * delta_t * delta_t;
         pm->last_position = pm->position;
@@ -168,6 +182,7 @@ void Ball::reset() {
     pm++;
   }
   frame_num = 0;
+  windOn = true;
 }
 
 void Ball::setupNormals() {

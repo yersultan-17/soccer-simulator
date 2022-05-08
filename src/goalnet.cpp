@@ -33,7 +33,7 @@ Goalnet::~Goalnet() {
 void Goalnet::buildGrid() {
     int a = num_width_points / 4;
     int l = num_width_points - 2 * a;
-    Vector3D start = {-5,-2,20};
+    Vector3D start = {-5,-2,70};
     for (int row = 0; row < num_height_points; ++row) {
         for (int col = 0; col < num_width_points; ++col) {
             Vector3D position = start;
@@ -43,7 +43,7 @@ void Goalnet::buildGrid() {
             vector<int> coords = {col, row};
             bool is_pinned = false;
             for (const vector<int>& pinCoord : pinned) {
-                if (pinCoord == coords) {
+                if (pinCoord == coords || row == num_height_points - 1) {
                     is_pinned = true;
                     break;
                 }

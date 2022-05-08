@@ -1,4 +1,9 @@
 {
+  "sphere": {
+  "origin": [0.0, 2, 0.0],
+  "radius": 120,
+  "friction": 0.0
+  },
   "goalnet": {
     "damping": 0.2,
     "density": 150.0,

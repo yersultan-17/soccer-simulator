@@ -65,6 +65,8 @@ struct Ball {
 
   // Wind
   double clock;
+
+  bool windOn;
 };
 
 #endif /* BALL_H */
