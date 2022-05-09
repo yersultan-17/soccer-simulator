@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1200px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics, Spring 2022</h1>
+<h1 align="middle">Soccer Simulation</h1>
+<h3 align="middle">Raiymbek Akshulakov, Rishi Parikh, Saagar Sanghavi, Yersultan Sapar</h3>
+<h3 align="middle">Team 19</h3>
+
+<br><br>
+
+<video width="320" height="240" controls>
+  <source src="sneakPeak.mp4" type="sneakPeak.mp4">
+</video>
+<h2 align="middle">Abstract</h2>
+<p>
+  Soccer is one of the most popular sports in the world, and poses many interesting graphical and
+  physical challenges to simulate. In this project, we model and visualize several important forces that
+  act on a soccer ball. Some of the major physical contributions of this project include: a truncated
+  icosahedron spring-mass system, internal air pressure forces acting on the ball, collisions between the ball,
+  ground, and goal net, and parametizable kicking action, wind speed, and spin. Next, we took a look how to
+  render the scene to be visually appealing, which included making use of multiple shaders, modifying UV values,
+  and setting surface normals for the ball mesh.
+
+  We then used the included simulator to model some of the world's most famous free kicks as shown above.
+  Adding these forces together allowed us to create realistic physical qualities such as the bounce of a
+  ball, and realistic ball-goalnet collisions.
+</p>
+
+<h1 align="middle">The Soccer Ball</h1>
+<h2 align="middle">Truncated Icosahedron</h2>
+<p></p>
+
+<h2 align="middle">Air Pressure</h2>
+<p>
+  A soccer ball is not a rigid body - it can flex and change shape depending on external forces.
+  In real life, a ball is pumped with air to create internal air pressure. You may have noticed in real life
+  that a flat ball is more easily deformable with your hands or does not bounce back when hitting the ground,
+  wheras a ball with higher airpressure is likely to spring back up and does not deform as much.
+  </br>
+  </br>
+  To model variable air pressure in our system, we introduce two values: <b>internal air</b> and <b>centroid</b>.
+  The <b>internal air</b> is a scalar parameter that changes how much air pressure there is in the ball.
+  Changing this value is similar to inflating or deflating a soccer ball in real life. The <b>centroid</b> is the average
+  position of every mass in the ball.
+  We define the force acting on each mass in the ball as:
+  <pre align="middle">direction = pm.position - centroid</pre>
+  <pre align="middle">magnitude = 1 / direction.norm()</pre>
+  <pre align="middle">F_air(pm, centroid) = direction.unit() / magnitude</pre>
+  This pushes every element in an outwards direction, while applying a greater force to objects closer to the ball.
+  The mathematical intuition behind this is that if the volume of the ball shrinks (radius decreases) and the amount of
+  internal air remains the same then overall pressure will increase.
+  </br>
+  <b>Insert Photos Here</b>
+  </br>
+  Our simplified model of air pressure holds up well under various conditions. Above, we demonstrate three scenarios.
+  We see that with no air pressure, the ball collapses in on itself - indicating the need for some internal force that
+  acts on the ball. As we increase air pressure, we model what is a "flat" ball. The ball has more flex and bounce, and
+  energy is lost in this process. Finally we look at a fully pumped ball. This ball has little noticable deformation,
+  and retains most of the energy as it returns to a similar height. In the above videos, we see that our model for air pressure
+  models real world behavior for both a flat and pumped ball.
+</p>
+<h1 align="middle">External Forces</h1>
+<h2 align="middle">Wind</h2>
+<p>
+  In soccer, external air is a big factor in kicking a ball. Many times a gust of wind will blow a ball off course,
+  and soccer players must account for this when aiming their shot. Wind is modeled as a “push”
+  force which affect particles depending on the direction from which it approach the object. The main idea is that
+  wind applies a stronger force on particles it hits head on, and the particles on the far side of the ball are
+  blocked from the wind and experience no wind force. Additionally, unlike gravity we ensure a terminal velocity
+  for acceleration due to wind. Here F_wind is a tunable parameter defined by a direction (with unit norm) and
+  magnitude vector.
+  <pre align="middle">F_app = (–F_wind⋅(pt.position – centroid)) * F_wind</pre>
+  This dot product between wind and direction from centroid evaluates to a cos(theta) term. This term, is common in many
+  physics equations that involve with forces applied at an angle. This cos(theta) term also shows up in many of the
+  light equations covered in class.
+</br>
+</br>
+  The effects of adding wind can be seen in the parabolic movement of the soccer ball. Many soccer players strategically
+  kick the ball in this swooping manner to curve the ball around an obstacle such as a defender.
+</p>
+
+<h2 align="middle">Spin</h2>
+
+<h2 align="middle">Collision</h2>
+<p>
+  In the scene, we model collisions between the soccer ball, ground, and goal net. In this problem, we faced two key design
+  challenges. The first was with runtime - we found that increasing the number of forces, objects in the scene, and physical
+  constraints greatly increased the compute required, even with spatial hashing. Next, the truncated icosahedron
+  is not actually a solid object - rather there are holes and gaps in the soccer ball due to the spring-mesh setup.
+</br></br>
+  To account for both of these problems, we decided to represent our soccer ball as a sphere for the purposes of checking for
+  collisions. To do this, we define the sphere's origin and radius.
+  <pre align="middle">origin = ∑ [pm.position] / n</pre>
+  <pre align="middle">radius = max (pm.position - centroid)</pre>
+
+  Using this spherical representation, we can use the point in sphere test to check for collisions with the goal net.
+</p>
+
+
+
+
+
+<h1 align="middle">Surrounding Scene</h1>
+<h2 align="middle">Goal Net</h2>
+<p>
+  The goal net was created by taking a single large rectangular grid and bending the net at various points.
+  We created 4 total components: two sides, a back, and a top of the net. To achieve this bending, we used
+  a piecewise function f(row, col): (x,y,z) to determine the position of each point mass.
+  </br>
+  </br>
+  Some challenges faced in the goal net were: finding the right indices at which to bend each component, removing
+  springs from specific edge cases to prevent unwanted forces in the corners, and segmentation faults that
+  occur when trying to make non-rectangular cloth meshes.
+</p>
+
+<h2>References</h2>
+<h2>Contributions</h2>
+
+</body>
+</html>

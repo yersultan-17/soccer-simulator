@@ -222,4 +222,4 @@ if(BUILD_DOCS)
 endif()
 
 # Install settings
-set(CMAKE_INSTALL_PREFIX "${SoccerSimulator_SOURCE_DIR}/")
+set(CMAKE_INSTALL_PREFIX "${Soccersim_SOURCE_DIR}/")
