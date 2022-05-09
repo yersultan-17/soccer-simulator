@@ -33,7 +33,7 @@
 <video width="320" height="240" controls>
   <source src="sneakPeak.mp4" type="sneakPeak.mp4">
 </video>
-<h2 align="middle">Abstract</h2>
+<h1 align="middle">Abstract</h1>
 <p>
   Soccer is one of the most popular sports in the world, and poses many interesting graphical and
   physical challenges to simulate. In this project, we model and visualize several important forces that
@@ -115,14 +115,18 @@
   <pre align="middle">origin = ∑ [pm.position] / n</pre>
   <pre align="middle">radius = max (pm.position - centroid)</pre>
 
-  Using this spherical representation, we can use the point in sphere test to check for collisions with the goal net.
+  Using this spherical representation, we can use the point in sphere test to check for collisions with the goal net. Computationally,
+  this reduces the workload because we go from polynomial to a linear number of checks.
+  <b>Insert equation for collision</b>
 </p>
 
 
-
-
-
-<h1 align="middle">Surrounding Scene</h1>
+<h1 align="middle">Visualization</h1>
+<h2 align="middle">360° FOV</h2>
+<p>
+  One of the biggest visualization goals we had was to create a 360° scene. This scene should be viewable
+  from all angles without seams or gaps.
+</p>
 <h2 align="middle">Goal Net</h2>
 <p>
   The goal net was created by taking a single large rectangular grid and bending the net at various points.
@@ -132,9 +136,33 @@
   </br>
   Some challenges faced in the goal net were: finding the right indices at which to bend each component, removing
   springs from specific edge cases to prevent unwanted forces in the corners, and segmentation faults that
-  occur when trying to make non-rectangular cloth meshes.
+  occur when trying to make non-rectangular cloth meshes. We can define the goal box to have dimensions L x H x S.
+  To do this, we can fold a 2D cloth of size (2 * S + L) x (H + S)
+  To create the piecewise value of position.xyz we have the follow set of equations.
+  <br>
+  If row <= H:
+  <pre>
+  position.x += max(0, min(l, col - s)) * step
+  position.z += step * min(col, a) - step * max(0, col - (l + s))
+  position.y += row * step
+  </pre>
+  If row > H:
+  <pre>
+    long x_diff = min(max(0, col - a), l)
+    long y_diff = 0.5 * min(col, a) - step * max(0, col - (l + a))
+    position.x += step * x_diff
+    position.z += step * (row + 1);
+    position.y += y_diff
+  </pre>
+</p>
+<h2 align="middle">Surface Normals for the Soccer ball</h2>
+<h2 align="middle">UV for textured plane</h2>
+<p>
+  The plane from the original project 4 library did not render high quality textures. To account
+  for this, we added UV coordinates for the plane to properly sample from our texture image.
 </p>
 
+<h2>Challenges</h2>
 <h2>References</h2>
 <h2>Contributions</h2>
 
