@@ -5,7 +5,7 @@
   <style>
     body {
       padding: 100px;
-      width: 1200px;
+      width: 1000px;
       margin: auto;
       text-align: left;
       font-weight: 300;
@@ -32,11 +32,14 @@
   <h1 align="middle">Soccer Simulation</h1>
   <h3 align="middle">Raiymbek Akshulakov, Rishi Parikh, Saagar Sanghavi, Yersultan Sapar</h3>
   <h3 align="middle">Team 19</h3>
-  <p>Webpage Self Link: </p>
-  <p>Github Repo: </p>
+  <p>Github Repo: <a
+      href="https://github.com/yersultan-17/soccer-simulator">https://github.com/yersultan-17/soccer-simulator</a> </p>
   <p>Final Video: </p>
+  <p>Presentation Slides: <a
+      href=https://docs.google.com/presentation/d/1wf8XAXiRO0MpfDwrQe1dYYyRYZWPdaS4-dGCq-1Mh98/edit#slide=id.g127e44062d3_0_8434>https://docs.google.com/presentation/d/1wf8XAXiRO0MpfDwrQe1dYYyRYZWPdaS4-dGCq-1Mh98/edit#slide=id.g127e44062d3_0_8434</a>
+  </p>
 
-  <br><br>
+  <br>VIDEOS HERE<br>
 
   <h1 align="middle">Abstract</h1>
   <p>
@@ -71,10 +74,22 @@
     icosahedron. Each new vertex on the truncated icosahedron is the intersection of two hexagonal faces and one
     pentagonal face.
   </p>
-  <p>
-    picture of icosahedron, side by side with
-    picture of truncated icosahedron
-  </p>
+
+  <div align="center">
+    <table style="width=100%">
+      <tr>
+        <td align="left">
+          <img src="icosahedron.jpeg" width="200px" />
+          <figcaption align="middle">Icosahedron</figcaption>
+        </td>
+        <td align="right">
+          <img src="trunc_icos.jpeg" width="200px" />
+          <figcaption align="middle">Truncated Icosahedron</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
   <p>
     Because of the highly symmetric nature of the truncated icosahedron, there is a rather elegant closed-from solution
     for the locations of the vertices. Letting φ = (1 + √5)/2 represent the golden ratio, the vertices
@@ -271,12 +286,12 @@
       </pre>
       If row > H:
       <pre>
-    long x_diff = min(max(0, col - a), l)
-    long y_diff = 0.5 * min(col, a) - step * max(0, col - (l + a))
-    position.x += step * x_diff
-    position.z += step * (row + 1);
-    position.y += y_diff
-  </pre>
+      long x_diff = min(max(0, col - a), l)
+      long y_diff = 0.5 * min(col, a) - step * max(0, col - (l + a))
+      position.x += step * x_diff
+      position.z += step * (row + 1);
+      position.y += y_diff
+      </pre>
   </p>
   <h1>Challenges and Learnings</h1>
   One key challenge we faced was with compatibility issues of the simulator code on different machines. Only two of our
