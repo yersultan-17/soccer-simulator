@@ -34,7 +34,7 @@ void Goalnet::buildGrid() {
     int a = num_width_points / 4;
     int l = num_width_points - 2 * a;
     Vector3D start = {-5,-2,70};
-    for (int row = 0; row < num_height_points; ++row) {
+    for (int row = 0; row < num_height_points - a; ++row) {
         for (int col = 0; col < num_width_points; ++col) {
             Vector3D position = start;
             position.x += max(0, min(l, col - a)) * 0.5;
@@ -43,7 +43,7 @@ void Goalnet::buildGrid() {
             vector<int> coords = {col, row};
             bool is_pinned = false;
             for (const vector<int>& pinCoord : pinned) {
-                if (pinCoord == coords || row == num_height_points - 1) {
+                if (pinCoord == coords || row == num_height_points-a-1) {
                     is_pinned = true;
                     break;
                 }
@@ -52,28 +52,98 @@ void Goalnet::buildGrid() {
         }
     }
 
+    start = {-5,-2,70};
+    start.y = (num_height_points - 2 * a - 1)  * 0.5 - 2;
+
+
+    for (int row = 0; row < a; ++row) {
+        for (int col = 0; col < num_width_points; ++col) {
+            Vector3D position = start;
+
+            int x_diff = min(max(0, col - a), l); // x diff is between a, w - 2a
+            int y_diff = 0.5 * min(col, a) - 0.5 * max(0, col - (l + a));
+
+            position.x += 0.5 * x_diff;
+            position.z += 0.5 * (row + 1);
+            position.y += y_diff;
+
+            vector<int> coords = {col, row};
+            bool is_pinned = false;
+            for (const vector<int>& pinCoord : pinned) {
+                if (col == a || col == l + a || row == 0) {
+                    is_pinned = true;
+                    break;
+                }
+            }
+            point_masses.emplace_back(position, true); // pinning all top ones
+        }
+    }
+
+
     // Let's set up the springs
     for (int row = 0; row < num_height_points; ++row) {
         for (int col = 0; col < num_width_points; ++col) {
             // add structural
             PointMass *cur = &point_masses[row * num_width_points + col];
             if (0 <= (row - 1) && (row - 1) < num_height_points && 0 <= col && col < num_width_points) {
-                PointMass *above = &point_masses[(row - 1) * num_width_points + col];
-                springs.emplace_back(cur, above, STRUCTURAL);
+                if (row < num_height_points - a || (row > num_height_points - a && col >= 1)) {
+                    PointMass *above = &point_masses[(row - 1) * num_width_points + col];
+                    springs.emplace_back(cur, above, STRUCTURAL);
+                }
             }
             if (0 <= row && row < num_height_points && 0 <= col - 1 && col - 1 < num_width_points) {
                 PointMass *left = &point_masses[row * num_width_points + col - 1];
-                springs.emplace_back(cur, left, STRUCTURAL);
+                if (row < num_height_points - a || (row >= num_height_points - a && col >= 1)) {
+                    springs.emplace_back(cur, left, STRUCTURAL);
+                }
             }
         }
     }
+
+    // ORIGINAL
+//    int a = num_width_points / 4;
+//    int l = num_width_points - 2 * a;
+//    Vector3D start = {-5,-2,70};
+//    for (int row = 0; row < num_height_points; ++row) {
+//        for (int col = 0; col < num_width_points; ++col) {
+//            Vector3D position = start;
+//            position.x += max(0, min(l, col - a)) * 0.5;
+//            position.z += 0.5 * min(col, a) - 0.5 * max(0, col - (l + a));
+//            position.y += row * 0.5;
+//            vector<int> coords = {col, row};
+//            bool is_pinned = false;
+//            for (const vector<int>& pinCoord : pinned) {
+//                if (pinCoord == coords || row == num_height_points - 1) {
+//                    is_pinned = true;
+//                    break;
+//                }
+//            }
+//            point_masses.emplace_back(position, is_pinned);
+//        }
+//    }
+//
+//    // Let's set up the springs
+//    for (int row = 0; row < num_height_points; ++row) {
+//        for (int col = 0; col < num_width_points; ++col) {
+//            // add structural
+//            PointMass *cur = &point_masses[row * num_width_points + col];
+//            if (0 <= (row - 1) && (row - 1) < num_height_points && 0 <= col && col < num_width_points) {
+//                PointMass *above = &point_masses[(row - 1) * num_width_points + col];
+//                springs.emplace_back(cur, above, STRUCTURAL);
+//            }
+//            if (0 <= row && row < num_height_points && 0 <= col - 1 && col - 1 < num_width_points) {
+//                PointMass *left = &point_masses[row * num_width_points + col - 1];
+//                springs.emplace_back(cur, left, STRUCTURAL);
+//            }
+//        }
+//    }
 }
 
 void Goalnet::simulate(double frames_per_sec, double simulation_steps, GoalnetParameters *gnp,
                        vector<Vector3D> external_accelerations,
                        vector<CollisionObject *> *collision_objects,
                        Ball *ball,
-                       float windSpeed, const Vector3D& windDirection) {
+                       float windSpeed, Vector3D& windDirection) {
     double mass = width * height * gnp->density / num_width_points / num_height_points;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
 
