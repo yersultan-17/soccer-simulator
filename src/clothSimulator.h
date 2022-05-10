@@ -76,9 +76,10 @@ private:
 
   // Wind EC: arguments and their default values
   float windSpeed = 0;
-  CGL::Vector3D activeWindDirection = CGL::Vector3D(0, 0, -1);
-  vector<std::string> windDirectionNames;
-  vector<CGL::Vector3D> windDirections;
+  CGL::Vector3D activeWindDirection = CGL::Vector3D(1, 0, 0);
+  CGL::Vector3D spin_axis = CGL::Vector3D(0, 1, 0);
+  CGL::Vector3D kick_direction = CGL::Vector3D(-2, 1, 5);
+  float kickStrength = 1;
 
   Cloth *cloth;
   ClothParameters *cp;

@@ -42,7 +42,7 @@ struct Goalnet {
                   vector<Vector3D> external_accelerations,
                   vector<CollisionObject *> *collision_objects,
                   Ball *ball,
-                  float windSpeed, const Vector3D& windDirection);
+                  float windSpeed, Vector3D& windDirection);
 
     void reset();
     void buildGoalnetMesh();

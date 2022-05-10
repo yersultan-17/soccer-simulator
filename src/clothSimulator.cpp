@@ -19,8 +19,6 @@
 #include <ctime>
 #include <sys/time.h>
 
-#define WINDENABLED false
-
 using namespace nanogui;
 using namespace std;
 
@@ -263,7 +261,7 @@ void ClothSimulator::drawContents() {
     vector<Vector3D> external_accelerations = {gravity};
 
     for (int i = 0; i < simulation_steps; i++) {
-      ball->simulate(frames_per_sec, simulation_steps, bp, external_accelerations, collision_objects, windSpeed, activeWindDirection);
+      ball->simulate(frames_per_sec, simulation_steps, bp, external_accelerations, collision_objects, windSpeed, activeWindDirection, spin_axis, kick_direction);
       goalnet->simulate(frames_per_sec, simulation_steps, gnp, external_accelerations, collision_objects, ball, windSpeed, activeWindDirection);
     }
   }
@@ -294,7 +292,6 @@ void ClothSimulator::drawContents() {
   switch (active_shader.type_hint) {
   case WIREFRAME:
     shader.setUniform("u_color", color, false);
-    //drawGoalnetWireframe(shader);
     drawBallWireframe(shader);
     break;
   case NORMALS:
@@ -302,8 +299,10 @@ void ClothSimulator::drawContents() {
     drawBallNormals(shader);
     break;
   case PHONG:
-  
-    // Others
+    drawGoalnetWireframe(shader);
+
+
+      // Others
     Vector3D cam_pos = camera.position();
     shader.setUniform("u_color", color, false);
     shader.setUniform("u_cam_pos", Vector3f(cam_pos.x, cam_pos.y, cam_pos.z), false);
@@ -414,7 +413,7 @@ void ClothSimulator::drawGoalnetWireframe(GLShader &shader) {
         si += 2;
     }
 
-    //shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
+    shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
     shader.uploadAttrib("in_position", positions, false);
     // Commented out: the wireframe shader does not have this attribute
     //shader.uploadAttrib("in_normal", normals);
@@ -812,10 +811,180 @@ bool ClothSimulator::resizeCallbackEvent(int width, int height) {
 void ClothSimulator::initGUI(Screen *screen) {
   Window *window;
   
-//  window = new Window(screen, "Simulation");
-//  window->setPosition(Vector2i(default_window_size(0) - 245, 15));
-//  window->setLayout(new GroupLayout(15, 6, 14, 5));
+  window = new Window(screen, "Simulation");
+  window->setPosition(Vector2i(default_window_size(0) - 245, 15));
+  window->setLayout(new GroupLayout(15, 6, 14, 5));
+
+
+  // Wind EC: wind speed slider + float box
+  new Label(window, "Wind speed", "sans-bold");
+  {
+        Widget *panel = new Widget(window);
+        panel->setLayout(
+                new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 5));
+
+        Slider *slider = new Slider(panel);
+        slider->setValue(round(windSpeed * 100) / 100);
+        slider->setFixedWidth(115);
+        slider->setRange({-10, 10});
+
+        FloatBox<float> *speed = new FloatBox<float>(panel, 0.2f);
+        speed->setFixedWidth(75);
+        speed->setMinMaxValues(-10, 10);
+        speed->setEditable(true);
+        speed->setValue(round(windSpeed * 100) / 100);
+        speed->setUnits("m/s");
+        speed->setFontSize(14);
+        speed->setCallback([this, slider](float value) {
+            if (value < -10) value = -10;
+            if (value > 10) value = 10;
+            windSpeed = round(value * 100) / 100;
+            slider->setValue(round(windSpeed * 100) / 100);
+        });
+
+
+        slider->setCallback([speed](float value) {
+            speed->setValue(round(value * 100) / 100);
+        });
+        slider->setFinalCallback([&](float value) {
+            windSpeed = round(value * 100) / 100;
+        });
+    }
+
+    new Label(window, "Wind Direction", "sans-bold");
+
+    {
+        Widget *panel = new Widget(window);
+        GridLayout *layout =
+                new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 5, 5);
+        layout->setColAlignment({Alignment::Maximum, Alignment::Fill});
+        layout->setSpacing(0, 10);
+        panel->setLayout(layout);
+
+        new Label(panel, "x :", "sans-bold");
+
+        FloatBox<double> *fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(activeWindDirection.x);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { activeWindDirection.x = value; });
+
+        new Label(panel, "y :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(activeWindDirection.y);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { activeWindDirection.y = value; });
+
+        new Label(panel, "z :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(activeWindDirection.z);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { activeWindDirection.z = value; });
+    }
+
+    new Label(window, "Spin Axis", "sans-bold");
+    {
+        Widget *panel = new Widget(window);
+        GridLayout *layout =
+                new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 5, 5);
+        layout->setColAlignment({Alignment::Maximum, Alignment::Fill});
+        layout->setSpacing(0, 10);
+        panel->setLayout(layout);
+
+        new Label(panel, "x :", "sans-bold");
+
+        FloatBox<double> *fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(spin_axis.x);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { spin_axis.x = value; });
+
+        new Label(panel, "y :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(spin_axis.y);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { spin_axis.y = value; });
+
+        new Label(panel, "z :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(spin_axis.z);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { spin_axis.z = value; });
+    }
+
+    new Label(window, "Kick Direction", "sans-bold");
+    {
+        Widget *panel = new Widget(window);
+        GridLayout *layout =
+                new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 5, 5);
+        layout->setColAlignment({Alignment::Maximum, Alignment::Fill});
+        layout->setSpacing(0, 10);
+        panel->setLayout(layout);
+
+        new Label(panel, "x :", "sans-bold");
+
+        FloatBox<double> *fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(kick_direction.x);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { kick_direction.x = value; });
+
+        new Label(panel, "y :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(kick_direction.y);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { kick_direction.y = value; });
+
+        new Label(panel, "z :", "sans-bold");
+
+        fb = new FloatBox<double>(panel);
+        fb->setEditable(true);
+        fb->setFixedSize(Vector2i(100, 20));
+        fb->setFontSize(14);
+        fb->setValue(kick_direction.z);
+        fb->setUnits("m/s^2");
+        fb->setSpinnable(true);
+        fb->setCallback([this](float value) { kick_direction.z = value; });
+    }
 //
+//    window = new Window(screen, "Appearance");
+//    window->setPosition(Vector2i(15, 15));
+//    window->setLayout(new GroupLayout(15, 6, 14, 5));
+
 //  // Spring types
 //
 //  new Label(window, "Spring types", "sans-bold");
@@ -1038,7 +1207,6 @@ void ClothSimulator::initGUI(Screen *screen) {
 //    cb->setSelectedIndex(2);
 //  }
 //    }
-//
 //
 //  window = new Window(screen, "Appearance");
 //  window->setPosition(Vector2i(15, 15));

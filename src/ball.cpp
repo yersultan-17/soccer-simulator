@@ -59,11 +59,10 @@ void Ball::collide(PointMass &pm) {
 void Ball::simulate(double frames_per_sec, double simulation_steps, BallParameters *bp,
                      vector<Vector3D> external_accelerations,
                     vector<CollisionObject *> *collision_objects,
-                    float windSpeed, const Vector3D& windDirection) {
+                    float windSpeed, Vector3D& windDir, Vector3D& spin_axis, Vector3D& kick_direction) {
+    windSpeed *= 500;
     double mass = bp->density / 60.f;
     double delta_t = 1.0f / frames_per_sec / simulation_steps;
-    windSpeed = 500.0;
-    Vector3D windDir = Vector3D(1, 0, 0);
 
     // Wind EC: keeping track of global c`lock of wind that resets periodically
     clock += delta_t;
@@ -113,13 +112,13 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
 
         // hack: initial "hit" force in first iteration
         if (frame_num < 10) {
-            pm->forces += Vector3D(-20000, 10000, 50000);
-            //pm->forces += Vector3D(0, 5000, 50000);
+            pm->forces += kick_direction * 10000;
+            //pm->forces += Vector3D(-20000, 10000, 50000);
         }
 
         Vector3D radiusVec = (pm->position - centroid).unit();
-        Vector3D spin_around = Vector3D{0, 1, 0};
-        Vector3D spin_dir = cross(radiusVec, spin_around);
+        //Vector3D spin_axis = Vector3D{0, 1, 0};
+        Vector3D spin_dir = cross(radiusVec, spin_axis);
         pm->forces += 5000 * (pm->position - pm->last_position).norm() * spin_dir;
 
         if (pm->pinned) continue;

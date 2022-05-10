@@ -40,7 +40,7 @@ struct Ball {
   void simulate(double frames_per_sec, double simulation_steps, BallParameters *cp,
                 vector<Vector3D> external_accelerations,
                 vector<CollisionObject *> *collision_objects,
-                float windSpeed, const Vector3D& windDirection);
+                float windSpeed, Vector3D& windDirection, Vector3D& spin_axis, Vector3D& kick_direction);
 
   void reset();
   void buildBallMesh();
