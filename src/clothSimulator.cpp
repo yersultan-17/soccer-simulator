@@ -75,7 +75,7 @@ void ClothSimulator::load_textures() {
   glGenTextures(1, &m_gl_cubemap_tex);
   
   m_gl_texture_1_size = load_texture(1, m_gl_texture_1, (m_project_root + "/textures/grass.jpeg").c_str());
-  m_gl_texture_2_size = load_texture(2, m_gl_texture_2, (m_project_root + "/textures/texture_2.png").c_str());
+  m_gl_texture_2_size = load_texture(2, m_gl_texture_2, (m_project_root + "/textures/texture_2.jpeg").c_str());
   m_gl_texture_3_size = load_texture(3, m_gl_texture_3, (m_project_root + "/textures/stasta.jpeg").c_str());
   m_gl_texture_4_size = load_texture(4, m_gl_texture_4, (m_project_root + "/textures/texture_4.png").c_str());
   m_gl_texture_6_size = load_texture(6, m_gl_texture_6, (m_project_root + "/textures/ballTexture.png").c_str());
@@ -287,7 +287,7 @@ void ClothSimulator::drawContents() {
   shader.setUniform("u_view_projection", viewProjection);
 
   shader.setUniform("u_color", color, false);
-  shader.setUniform("u_texture_6", 6, false);
+  shader.setUniform("u_texture_6", 2, false);
   drawGoalnetWireframe(shader);
   switch (active_shader.type_hint) {
   case WIREFRAME:
@@ -299,8 +299,6 @@ void ClothSimulator::drawContents() {
     drawBallNormals(shader);
     break;
   case PHONG:
-    drawGoalnetWireframe(shader);
-
 
       // Others
     Vector3D cam_pos = camera.position();
@@ -407,8 +405,8 @@ void ClothSimulator::drawGoalnetWireframe(GLShader &shader) {
         positions.col(si) << pa.x, pa.y, pa.z, 1.0;
         positions.col(si + 1) << pb.x, pb.y, pb.z, 1.0;
 
-        normals.col(si) << na.x, na.y, na.z, 0.0;
-        normals.col(si + 1) << nb.x, nb.y, nb.z, 0.0;
+        normals.col(si) << 0.1, 0.0, 0.0, 0.0; // na.x, na.y, na.z, 0.0;
+        normals.col(si + 1) << 0.1, 0.0, 0.0, 0.0;
 
         si += 2;
     }
@@ -416,7 +414,7 @@ void ClothSimulator::drawGoalnetWireframe(GLShader &shader) {
     shader.setUniform("u_color", nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f), false);
     shader.uploadAttrib("in_position", positions, false);
     // Commented out: the wireframe shader does not have this attribute
-    //shader.uploadAttrib("in_normal", normals);
+    // shader.uploadAttrib("in_normal", normals);
 
     shader.drawArray(GL_LINES, 0, num_springs * 2);
 }

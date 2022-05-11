@@ -34,7 +34,7 @@ void Ball::buildShape() {
   // Build a truncated icosahedron of masses and springs.
   for (auto vertex: vertices) {
       double scale = 0.7;
-      point_masses.emplace_back(scale * Vector3D(vertex[0], vertex[1], vertex[2]), false);
+      point_masses.emplace_back(scale * Vector3D(vertex[0], vertex[1] - 1.75, vertex[2]), false);
   }
   // Now, let's set up the springs
   for (auto edge: edges) {
@@ -81,6 +81,7 @@ void Ball::simulate(double frames_per_sec, double simulation_steps, BallParamete
         Vector3D dir = pm->position - centroid;
         pm->forces += (INTERNAL_PRESSURE * dir.unit()) / dir.norm();
         if (windOn) {
+            if (windDir.x != 0 && windDir.y != 0 && windDir.z != 0) windDir.normalize();
             double cos_theta_wind = std::max(0.0, dot((pm->position - centroid), -windDir));
             Vector3D windForce = cos_theta_wind * windSpeed * windDir;
             pm->forces += windForce;
@@ -178,6 +179,7 @@ void Ball::reset() {
   for (int i = 0; i < point_masses.size(); i++) {
     pm->position = pm->start_position;
     pm->last_position = pm->start_position;
+    pm->forces = Vector3D();
     pm++;
   }
   frame_num = 0;

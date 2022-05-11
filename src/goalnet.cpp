@@ -52,11 +52,11 @@ void Goalnet::buildGrid() {
         }
     }
 
-    start = {-5,-2,70};
-    start.y = (num_height_points - 2 * a - 1)  * 0.5 - 2;
+    //start = {-5,-2,30};
+    start.y = (num_height_points - 2 * a - 1)  * 0.5 - 1;
 
 
-    for (int row = 0; row < a; ++row) {
+    for (int row g= 0; row < a; ++row) {
         for (int col = 0; col < num_width_points; ++col) {
             Vector3D position = start;
 
@@ -256,17 +256,14 @@ void Goalnet::buildGoalnetMesh() {
             PointMass *pm_C = pm + num_width_points    ;
             PointMass *pm_D = pm + num_width_points + 1;
 
-            Vector3D uv_A = Vector3D(u_min, v_min, 0);
-            Vector3D uv_B = Vector3D(u_max, v_min, 0);
-            Vector3D uv_C = Vector3D(u_min, v_max, 0);
-            Vector3D uv_D = Vector3D(u_max, v_max, 0);
+            Vector3D uv = Vector3D(0.1, 0.2, 0.);
 
 
             // Both triangles defined by vertices in counter-clockwise orientation
             triangles.push_back(new Triangle(pm_A, pm_C, pm_B,
-                                             uv_A, uv_C, uv_B));
+                                             uv, uv, uv));
             triangles.push_back(new Triangle(pm_B, pm_C, pm_D,
-                                             uv_B, uv_C, uv_D));
+                                             uv, uv, uv));
         }
     }
 
