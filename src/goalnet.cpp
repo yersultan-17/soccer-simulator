@@ -56,7 +56,7 @@ void Goalnet::buildGrid() {
     start.y = (num_height_points - 2 * a - 1)  * 0.5 - 1;
 
 
-    for (int row g= 0; row < a; ++row) {
+    for (int row = 0; row < a; ++row) {
         for (int col = 0; col < num_width_points; ++col) {
             Vector3D position = start;
 
